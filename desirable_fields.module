@@ -65,10 +65,34 @@ function desirable_fields_list() {
   $list_users = desirable_fields_list_users_missing_fields();
   // dpm($list_users);
 
-
+  $header = array('User', 'Fields not filled', 'Signup date');
+  $rows = array();
+  
+  foreach ($list_users as $user) {
+    $missing_fields_name = array();
+    foreach ($user['missing_fields'] as $missing_field) {
+      array_push($missing_fields_name, field_info_instance('user', $missing_field, 'user')['label']);
+    }
+    
+    // dpm($missing_fields_name);
+    
+    array_push($rows, array(
+      l($user['name'], $user['profile_link']),
+      theme('item_list', array(
+        'items' => $missing_fields_name,
+      )),
+      format_date($user['created'], 'short'),
+      )
+    );
+  }
   
   $list = array(
-    '#markup' => 'test',
+    '#markup' => theme(
+      'table', array(
+        'header' => $header,
+        'rows' => $rows,
+      )
+    ),
   );
   
   return $list;
@@ -118,7 +142,6 @@ function desirable_fields_list_users_missing_fields() {
   unset($users[0]);
     
   $users_missing_fields = array();
-  // dpm($users);
   
   foreach ($users as $user) {
     $users_missing_fields[$user->uid] = array();
@@ -129,17 +152,18 @@ function desirable_fields_list_users_missing_fields() {
       }
     }
     // Bleh: there's a more efficient way I'm sure but don't want to redo the
-    // foreach
+    // foreach just yet
     if(empty($users_missing_fields[$user->uid]['missing_fields'])) {
       unset($users_missing_fields[$user->uid]);
     }
     else {
       $users_missing_fields[$user->uid]['name'] = $user->name;
       $users_missing_fields[$user->uid]['profile_link'] = drupal_get_path_alias('user/' . $user->uid);
+      $users_missing_fields[$user->uid]['created'] = $user->created;
     }
   }
   
-  dpm($users_missing_fields);
+  // dpm($users_missing_fields);
   
   return $users_missing_fields;
   
