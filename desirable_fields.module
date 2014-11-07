@@ -62,12 +62,10 @@ function desirable_fields_define() {
  * Administration list of users who haven't filled in desired fields.
  */
 function desirable_fields_list() {
-  $list_users = desirable_fields_list_users();
+  $list_users = desirable_fields_list_users_missing_fields();
   // dpm($list_users);
 
-  foreach ($list_users as $record) {
-    dpm($record);
-  }
+
   
   $list = array(
     '#markup' => 'test',
@@ -91,16 +89,14 @@ function _desirable_fields_list_all_fields() {
 }
 
 /**
- * Currently returns database query object of all desirable fields' data tables.
- * 
- * // Returns all users who do not have desirable fields filled.
+ * Returns all users who do not have desirable fields filled.
  * 
  * Fields are stored in the database under field_data_field_{MACHINE NAME}
  * attached to entity_type 'user'. User ID is 'entity_id'.
  */
-function desirable_fields_list_users() {
+function desirable_fields_list_users_missing_fields() {
   $desirable_fields = variable_get('desirable_fields_selected_fields');
-
+  
   // Remove unselected fields entirely
   foreach ($desirable_fields as $key => $field) {
     if ($field == '0') {
@@ -108,22 +104,22 @@ function desirable_fields_list_users() {
     }
   }
   
-  // Build query string
-  $first = TRUE;
-  $query;
-  foreach ($desirable_fields as $key => $field) {
-    if ($first == TRUE) {
-      $query = db_select('field_data_' . $key);
-      $query->fields('field_data_' . $key, array('entity_type', 'entity_id'));
-      $first = FALSE;
-    }
-    else {
-      $query->join('field_data_' . $key);
-      $query->fields('field_data_' . $key, array('entity_type', 'entity_id'));
+  $users = entity_load('user'); // In Drupal 8 it's _multiple
+  
+  $users_missing_fields = array();
+  foreach ($desirable_fields as $field_key => $field) {
+    // dpm($field);
+    $users_missing_fields[$field] = array();
+    foreach ($users as $user) {
+      if (empty($user->$field_key)) {
+        // dpm('Empty: ' . $user->name);
+        array_push($users_missing_fields[$field], $user->uid);
+      }
     }
   }
   
-  $result = $query->execute();
-  // dpm($desirable_fields);
-  return $result;
+  dpm($users_missing_fields);
+  
+  return $users_missing_fields;
+  
 }
