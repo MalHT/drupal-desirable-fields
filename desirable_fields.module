@@ -91,8 +91,16 @@ function _desirable_fields_list_all_fields() {
 /**
  * Returns all users who do not have desirable fields filled.
  * 
- * Fields are stored in the database under field_data_field_{MACHINE NAME}
- * attached to entity_type 'user'. User ID is 'entity_id'.
+ * Returns an array of the following structure:
+ * 
+ * - {uid}
+ *    - missing_fields
+ *      - {field name}
+ *      - {field name}
+ *      - ...
+ *    - name => {username}
+ *    - profile_link => {relative user path}
+ * - ...
  */
 function desirable_fields_list_users_missing_fields() {
   $desirable_fields = variable_get('desirable_fields_selected_fields');
@@ -104,17 +112,30 @@ function desirable_fields_list_users_missing_fields() {
     }
   }
   
-  $users = entity_load('user'); // In Drupal 8 it's _multiple
-  
+  // As a side note, in Drupal 8 it's entity_load_multiple()
+  $users = entity_load('user');
+  // Ignore anonymous user
+  unset($users[0]);
+    
   $users_missing_fields = array();
-  foreach ($desirable_fields as $field_key => $field) {
-    // dpm($field);
-    $users_missing_fields[$field] = array();
-    foreach ($users as $user) {
+  // dpm($users);
+  
+  foreach ($users as $user) {
+    $users_missing_fields[$user->uid] = array();
+    $users_missing_fields[$user->uid]['missing_fields'] = array();
+    foreach ($desirable_fields as $field_key => $field) {
       if (empty($user->$field_key)) {
-        // dpm('Empty: ' . $user->name);
-        array_push($users_missing_fields[$field], $user->uid);
+        array_push($users_missing_fields[$user->uid]['missing_fields'], $field);
       }
+    }
+    // Bleh: there's a more efficient way I'm sure but don't want to redo the
+    // foreach
+    if(empty($users_missing_fields[$user->uid]['missing_fields'])) {
+      unset($users_missing_fields[$user->uid]);
+    }
+    else {
+      $users_missing_fields[$user->uid]['name'] = $user->name;
+      $users_missing_fields[$user->uid]['profile_link'] = drupal_get_path_alias('user/' . $user->uid);
     }
   }
   
