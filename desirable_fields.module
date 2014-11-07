@@ -50,7 +50,7 @@ function desirable_fields_define() {
   $form['desirable_fields_selected_fields'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Desirable fields'),
-    '#description' => t('Fields selected here are marked as desirable'),
+    '#description' => t('Fields selected here are marked as desirable.'),
     '#options' => _desirable_fields_list_all_fields(),
     '#default_value' => variable_get('desirable_fields_selected_fields', array()),
   );
@@ -87,7 +87,8 @@ function desirable_fields_list() {
   }
   
   $list = array(
-    '#markup' => theme(
+    '#markup' => '<p>The following table shows which users have not filled in the desired fields.</p>'
+     . theme(
       'table', array(
         'header' => $header,
         'rows' => $rows,
