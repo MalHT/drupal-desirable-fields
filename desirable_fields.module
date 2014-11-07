@@ -1,0 +1,129 @@
+<?php
+/**
+ * @file
+ * Implements 'desirable fields' functionality.
+ * 
+ * 
+ */
+ 
+/**
+ * Implements hook_menu().
+ */
+function desirable_fields_menu() {
+  $items = array();
+  
+  // Create main menu item and set callback to 'desirable_fields_define' form.
+  $items['admin/config/people/accounts/fields/desirable-fields'] = array(
+    'title' => 'Desirable fields',
+    'description' => 'Configure which fields are considered desirable and how they should be handled.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('desirable_fields_define'),
+    'access arguments' => array('administer desirable_fields settings'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  
+  // Make a default tab to encompass the above.
+  $items['admin/config/people/accounts/fields/desirable-fields/settings'] = array(
+    'title' => 'Set desirable fields',
+    'description' => 'Configure which fields are considered desirable',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  
+  // Make a new tab for listing user status regarding desirable fields.
+  $items['admin/config/people/accounts/fields/desirable-fields/user-status'] = array(
+    'title' => "View users' field status",
+    'description' => 'See which users do not have desired fields set',
+    'page callback' => 'desirable_fields_list',
+    'access arguments' => array('view desirable_fields users'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  
+  return $items;
+}
+
+/**
+ * Administration form for defining which fields are desirable.
+ */
+function desirable_fields_define() {
+  $form = array();
+  
+  $form['desirable_fields_selected_fields'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Desirable fields'),
+    '#description' => t('Fields selected here are marked as desirable'),
+    '#options' => _desirable_fields_list_all_fields(),
+    '#default_value' => variable_get('desirable_fields_selected_fields', array()),
+  );
+  
+  return system_settings_form($form);
+}
+
+/**
+ * Administration list of users who haven't filled in desired fields.
+ */
+function desirable_fields_list() {
+  $list_users = desirable_fields_list_users();
+  // dpm($list_users);
+
+  foreach ($list_users as $record) {
+    dpm($record);
+  }
+  
+  $list = array(
+    '#markup' => 'test',
+  );
+  
+  return $list;
+}
+
+/**
+ * Returns the list of all available user fields.
+ */
+function _desirable_fields_list_all_fields() {
+  $info = entity_get_property_info('user');
+  $fields = array();
+  
+  foreach ($info['bundles']['user']['properties'] as $key => $field) {
+    $fields[$key] = $field['label'];
+  }
+    
+  return $fields;
+}
+
+/**
+ * Currently returns database query object of all desirable fields' data tables.
+ * 
+ * // Returns all users who do not have desirable fields filled.
+ * 
+ * Fields are stored in the database under field_data_field_{MACHINE NAME}
+ * attached to entity_type 'user'. User ID is 'entity_id'.
+ */
+function desirable_fields_list_users() {
+  $desirable_fields = variable_get('desirable_fields_selected_fields');
+
+  // Remove unselected fields entirely
+  foreach ($desirable_fields as $key => $field) {
+    if ($field == '0') {
+      unset($desirable_fields[$key]);
+    }
+  }
+  
+  // Build query string
+  $first = TRUE;
+  $query;
+  foreach ($desirable_fields as $key => $field) {
+    if ($first == TRUE) {
+      $query = db_select('field_data_' . $key);
+      $query->fields('field_data_' . $key, array('entity_type', 'entity_id'));
+      $first = FALSE;
+    }
+    else {
+      $query->join('field_data_' . $key);
+      $query->fields('field_data_' . $key, array('entity_type', 'entity_id'));
+    }
+  }
+  
+  $result = $query->execute();
+  // dpm($desirable_fields);
+  return $result;
+}
