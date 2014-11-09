@@ -3,9 +3,29 @@
  * @file
  * Implements 'desirable fields' functionality.
  * 
- * 
+ * Allows administrators to set fields in user profiles that are
+ * considered 'desirable.' Said fields are not required for registration but are
+ * expected to be present on a profile within a certain time. The module
+ * provides a list of users who have not filled in one or more desirable fields.
  */
- 
+
+/**
+ * Implements hook_permission().
+ */
+function desirable_fields_permission() {
+  $permissions = array();
+  $permissions['administer desirable fields'] = array(
+    'title' => t('Administer desirable fields'),
+    'description' => t('Select which user profile fields are considered desirable.'),
+    'restrict access' => TRUE,
+  );
+  $permissions['view user desirable fields status'] = array(
+    'title' => t("View users' desirable fields status"),
+    'description' => t("View a list of users who are missing one or more desirable fields on their profile."),
+  );
+  return $permissions;
+}
+
 /**
  * Implements hook_menu().
  */
@@ -13,28 +33,28 @@ function desirable_fields_menu() {
   $items = array();
   
   // Create main menu item and set callback to 'desirable_fields_define' form.
-  $items['admin/config/people/accounts/fields/desirable-fields'] = array(
+  $items['admin/config/people/accounts/desirable-fields'] = array(
     'title' => 'Desirable fields',
     'description' => 'Configure which fields are considered desirable and how they should be handled.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('desirable_fields_define'),
-    'access arguments' => array('administer desirable_fields settings'),
+    'access arguments' => array('administer desirable fields'),
     'type' => MENU_NORMAL_ITEM,
   );
   
   // Make a default tab to encompass the above.
-  $items['admin/config/people/accounts/fields/desirable-fields/settings'] = array(
+  $items['admin/config/people/accounts/desirable-fields/settings'] = array(
     'title' => 'Set desirable fields',
     'description' => 'Configure which fields are considered desirable',
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
   
   // Make a new tab for listing user status regarding desirable fields.
-  $items['admin/config/people/accounts/fields/desirable-fields/user-status'] = array(
+  $items['admin/config/people/accounts/desirable-fields/user-status'] = array(
     'title' => "View users' field status",
     'description' => 'See which users do not have desired fields set',
     'page callback' => 'desirable_fields_list',
-    'access arguments' => array('view desirable_fields users'),
+    'access arguments' => array('view user desirable fields status'),
     'type' => MENU_LOCAL_TASK,
   );
   
