@@ -83,7 +83,6 @@ function desirable_fields_define() {
  */
 function desirable_fields_list() {
   $list_users = desirable_fields_list_users_missing_fields();
-  // dpm($list_users);
 
   $header = array('User', 'Fields not filled', 'Signup date');
   $rows = array();
@@ -93,8 +92,6 @@ function desirable_fields_list() {
     foreach ($user['missing_fields'] as $missing_field) {
       array_push($missing_fields_name, field_info_instance('user', $missing_field, 'user')['label']);
     }
-    
-    // dpm($missing_fields_name);
     
     array_push($rows, array(
       l($user['name'], $user['profile_link']),
@@ -108,7 +105,7 @@ function desirable_fields_list() {
   
   $list = array(
     '#markup' => '<p>The following table shows which users have not filled in the desired fields.</p>'
-     . theme(
+    . theme(
       'table', array(
         'header' => $header,
         'rows' => $rows,
@@ -150,16 +147,16 @@ function _desirable_fields_list_all_fields() {
 function desirable_fields_list_users_missing_fields() {
   $desirable_fields = variable_get('desirable_fields_selected_fields');
   
-  // Remove unselected fields entirely
+  // Remove unselected fields entirely.
   foreach ($desirable_fields as $key => $field) {
     if ($field == '0') {
       unset($desirable_fields[$key]);
     }
   }
   
-  // As a side note, in Drupal 8 it's entity_load_multiple()
+  // As a side note, in Drupal 8 it's entity_load_multiple().
   $users = entity_load('user');
-  // Ignore anonymous user
+  // Ignore anonymous user.
   unset($users[0]);
     
   $users_missing_fields = array();
@@ -172,9 +169,8 @@ function desirable_fields_list_users_missing_fields() {
         array_push($users_missing_fields[$user->uid]['missing_fields'], $field);
       }
     }
-    // Bleh: there's a more efficient way I'm sure but don't want to redo the
-    // foreach just yet
-    if(empty($users_missing_fields[$user->uid]['missing_fields'])) {
+    // Remove users with no missing fields now that users are processed.
+    if (empty($users_missing_fields[$user->uid]['missing_fields'])) {
       unset($users_missing_fields[$user->uid]);
     }
     else {
@@ -183,8 +179,6 @@ function desirable_fields_list_users_missing_fields() {
       $users_missing_fields[$user->uid]['created'] = $user->created;
     }
   }
-  
-  // dpm($users_missing_fields);
   
   return $users_missing_fields;
   
